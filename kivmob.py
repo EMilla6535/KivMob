@@ -218,7 +218,7 @@ class AndroidBridge(AdMobBridge):
         self._loaded = False
 
         try:
-            MobileAds.initialize(activity.mActivity, appID)
+            MobileAds.initialize(activity.mActivity)
 
         except ValueError as error:
             print(error)
