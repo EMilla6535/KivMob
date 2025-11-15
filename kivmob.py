@@ -223,11 +223,14 @@ class AndroidBridge(AdMobBridge):
         except ValueError as error:
             print(error)
             
-        self._adview = AdView(activity.mActivity)
-        self._interstitial = InterstitialAd(activity.mActivity)
-        self._rewarded = MobileAds.getRewardedVideoAdInstance(
-            activity.mActivity
-        )
+        try:
+            self._adview = AdView(activity.mActivity)
+            self._interstitial = InterstitialAd(activity.mActivity)
+            self._rewarded = MobileAds.getRewardedVideoAdInstance(
+                activity.mActivity
+            )
+        except Exception as e:
+            print("Exception Raised in the block _adview, _interstitial, _rewarded: ", e)
         self._test_devices = []
 
     @run_on_ui_thread
