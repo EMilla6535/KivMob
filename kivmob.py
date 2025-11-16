@@ -3,6 +3,7 @@ from kivy.logger import Logger
 from kivy.metrics import dp
 from kivy.utils import platform
 
+
 if platform == "android":
     try:
         from jnius import autoclass, cast, PythonJavaClass, java_method
@@ -22,13 +23,61 @@ if platform == "android":
         LinearLayout = autoclass("android.widget.LinearLayout")
         MobileAds = autoclass("com.google.android.gms.ads.MobileAds")
         RewardItem = autoclass("com.google.android.gms.ads.rewarded.RewardItem")
+        #RewardedVideoAd = autoclass("com.google.android.gms.ads.rewarded.RewardedVideoAd")
+        #RewardedVideoAdListener = autoclass("com.google.android.gms.ads.rewarded.RewardedVideoAdListener")
         View = autoclass("android.view.View")
-    
+
+        """ TODO since no more RewardedVideoAd
+        class AdMobRewardedVideoAdListener(PythonJavaClass):
+            __javainterfaces__ = (
+                "com.google.android.gms.ads.reward.RewardedVideoAdListener",
+            )
+            __javacontext__ = "app"
+            def __init__(self, listener):
+                self._listener = listener
+            @java_method("(Lcom/google/android/gms/ads/reward/RewardItem;)V")
+            def onRewarded(self, reward):
+                Logger.info("KivMob: onRewarded() called.")
+                self._listener.on_rewarded(
+                    reward.getType(), reward.getAmount()
+                )
+            @java_method("()V")
+            def onRewardedVideoAdLeftApplication(self):
+                Logger.info(
+                    "KivMob: onRewardedVideoAdLeftApplicaxtion() called."
+                )
+                self._listener.on_rewarded_video_ad_left_application()
+            @java_method("()V")
+            def onRewardedVideoAdClosed(self):
+                Logger.info("KivMob: onRewardedVideoAdClosed() called.")
+                self._listener.on_rewarded_video_ad_closed()
+            @java_method("(I)V")
+            def onRewardedVideoAdFailedToLoad(self, errorCode):
+                Logger.info("KivMob: onRewardedVideoAdFailedToLoad() called.")
+                # Logger.info("KivMob: ErrorCode " + str(errorCode))
+                self._listener.on_rewarded_video_ad_failed_to_load(errorCode)
+            @java_method("()V")
+            def onRewardedVideoAdLoaded(self):
+                Logger.info("KivMob: onRewardedVideoAdLoaded() called.")
+                self._listener.on_rewarded_video_ad_loaded()
+            @java_method("()V")
+            def onRewardedVideoAdOpened(self):
+                Logger.info("KivMob: onRewardedVideoAdOpened() called.")
+                self._listener.on_rewarded_video_ad_opened()
+            @java_method("()V")
+            def onRewardedVideoStarted(self):
+                Logger.info("KivMob: onRewardedVideoStarted() called.")
+                self._listener.on_rewarded_video_ad_started()
+            @java_method("()V")
+            def onRewardedVideoCompleted(self):
+                Logger.info("KivMob: onRewardedVideoCompleted() called.")
+                self._listener.on_rewarded_video_ad_completed()
+        """
+
     except BaseException:
         Logger.error(
             "KivMob: Cannot load AdMob classes. Check buildozer.spec."
         )
-
 else:
 
     """
@@ -38,6 +87,7 @@ else:
 
     def run_on_ui_thread(x):
         pass
+
 
 class TestIds:
     """ Enum of test ad ids provided by AdMob. This allows developers to
@@ -58,6 +108,7 @@ class TestIds:
 
     """ Test Rewarded Video Ad ID """
     REWARDED_VIDEO = "ca-app-pub-3940256099942544/5224354917"
+
 
 class AdMobBridge:
     def __init__(self, appID):
@@ -105,24 +156,61 @@ class AdMobBridge:
     def show_rewarded_ad(self):
         pass
 
-class InterstitialAdLoadListener(PythonJavaClass):
-    __javaclass__ = 'com/google/android/gms/ads/interstitial/InterstitialAdLoadCallback'
-    __javainterfaces__ = ['com/google/android/gms/ads/interstitial/InterstitialAdLoadCallback']
 
-    def __init__(self):
-        super(InterstitialAdLoadListener, self).__init__()
-        self.interstitial_ad = None
+class RewardedListenerInterface:
+    """ Interface for objects that handle rewarded video ad
+        callback functions
+    """
 
-    @java_method('(Lcom/google/android/gms/ads/interstitial/InterstitialAd;)V')
-    def onAdLoaded(self, ad):
-        print("Ad was loaded successfully!")
-        self.interstitial_ad = cast('com.google.android.gms.ads.interstitial.InterstitialAd', ad)
+    def on_rewarded(self, reward_name, reward_amount):
+        """ Called when the video completes
 
-    @java_method('(Lcom/google/android/gms/ads/LoadAdError;)V')
-    def onAdFailedToLoad(self, adError):
-        print(f"Ad failed to load: {adError.toString()}")
-        self.interstitial_ad = None
-    
+            :type reward_name: string
+            :param reward_name: Name of the reward.
+            :type reward_amount: string
+            :param reward_amount: Amount of the reward.
+        """
+        pass
+
+    def on_rewarded_video_ad_left_application(self):
+        """ Called when the user closes the application while
+            the video is playing.
+        """
+        pass
+
+    def on_rewarded_video_ad_closed(self):
+        """ Called when the user manually closes the ad before completion.
+        """
+        pass
+
+    def on_rewarded_video_ad_failed_to_load(self, error_code):
+        """ Called when the rewarded video ad fails to load.
+
+            :type error_code: int
+            :param error_code: Integer code that corresponds to the error.
+        """
+        pass
+
+    def on_rewarded_video_ad_loaded(self):
+        """ Called when the rewarded ad finishes loading.
+        """
+        pass
+
+    def on_rewarded_video_ad_opened(self):
+        """ Called when the rewarded ad is opened.
+        """
+        pass
+
+    def on_rewarded_video_ad_started(self):
+        """ Called when the rewarded video ad starts.
+        """
+        pass
+
+    def on_rewarded_video_ad_completed(self):
+        """ Called when the rewarded video ad completes.
+        """
+        pass
+
 
 class AndroidBridge(AdMobBridge):
     @run_on_ui_thread
@@ -142,12 +230,8 @@ class AndroidBridge(AdMobBridge):
                 print("Error: activity.mActivity is None")
             print("activity -> ", activity)
             print("activity.mActivity -> ", activity.mActivity)
-            self.inter_listener = InterstitialAdLoadListener()
-            self.inter_id = None
-            self._interstitial = None
-
             self._adview = AdView(activity.mActivity)
-            #self._interstitial = InterstitialAd(activity.mActivity)
+            self._interstitial = InterstitialAd(activity.mActivity)
             self._rewarded = MobileAds.getRewardedVideoAdInstance(
                 activity.mActivity
             )
@@ -193,21 +277,16 @@ class AndroidBridge(AdMobBridge):
 
     @run_on_ui_thread
     def new_interstitial(self, unitID):
-        #self._interstitial.setAdUnitId(unitID)
-        self.inter_id = unitID
+        self._interstitial.setAdUnitId(unitID)
 
     @run_on_ui_thread
     def request_interstitial(self, options={}):
-        #self._interstitial.loadAd(self._get_builder(options).build())
-        if self.inter_id is not None:
-            InterstitialAd.load(activity.mActivity, self.inter_id, self._get_builder(options).build(), self.inter_listener)
-        else:
-            print("No ID for interstitial ad.")
+        print("*** Interstitial options -> ", options)
+        self._interstitial.loadAd(self._get_builder(options).build())
 
     @run_on_ui_thread
     def _is_interstitial_loaded(self):
-        #self._loaded = self._interstitial.isLoaded()
-        self._loaded = True if self.inter_listener.interstitial_ad is not None else False
+        self._loaded = self._interstitial.isLoaded()
 
     def is_interstitial_loaded(self):
         self._is_interstitial_loaded()
@@ -215,12 +294,8 @@ class AndroidBridge(AdMobBridge):
 
     @run_on_ui_thread
     def show_interstitial(self):
-        #if self.is_interstitial_loaded():
-        #    self._interstitial.show()
-        if self.inter_listener.interstitial_ad:
-            self.inter_listener.interstitial_ad.show(activity.mActivity)
-        else:
-            print("Ad not ready to show.")
+        if self.is_interstitial_loaded():
+            self._interstitial.show()
 
     @run_on_ui_thread
     def set_rewarded_ad_listener(self, listener):
@@ -266,6 +341,7 @@ class AndroidBridge(AdMobBridge):
                 builder.addTestDevice(test_device)
                 
         return builder
+
 
 class iOSBridge(AdMobBridge):
     # TODO
